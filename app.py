@@ -1,6 +1,6 @@
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema import StrOutputParser
-from langchain.schema.runnable import Runnable, RunnablePassthrough
+from langchain.schema.runnable import Runnable, RunnablePassthrough, RunnableParallel
 from langchain.schema.runnable.config import RunnableConfig
 
 # LangChain supports many other chat models. Here, we're using Ollama
@@ -34,13 +34,22 @@ async def on_chat_start():
     
     prompt = ChatPromptTemplate.from_template(template)    
     
-    chain = (
-    {"context": retriever, "question": RunnablePassthrough()}
+    # chain = (
+    # {"context": retriever, "question": RunnablePassthrough()}
+    # | prompt
+    # | model 
+    # )
+
+    rag_chain_from_docs = (
+    RunnablePassthrough.assign(context=(lambda x: x["context"]))
     | prompt
-    | model 
+    | model
     | StrOutputParser()
     )
 
+    chain = RunnableParallel(
+        {"context": retriever, "question": RunnablePassthrough()}
+    ).assign(answer=rag_chain_from_docs)
    
     cl.user_session.set("chain", chain)
 
@@ -54,9 +63,18 @@ async def on_message(message: cl.Message):
     answer = cl.Message(content="")
     # config = RunnableConfig(callbacks=[cl.LangchainCallbackHandler()])
 
-    print(message.content)
+    sources = set()
     async for chunk in chain.astream(message.content):
-        await answer.stream_token(chunk)        
+
+        if "context" in chunk:
+            for doc in chunk["context"]:
+                sources.add(doc.metadata["source"])
+                                
+        if "answer" in chunk:
+            await answer.stream_token(chunk["answer"])
 
 
+    answer.elements = [cl.Pdf(name="pdf1", display="inline", path=s) for s in sources]                
+
+    
     await answer.send()
