@@ -24,11 +24,11 @@ async def on_chat_start():
     model = ChatOllama(model="mistral")
     embeddings = HuggingFaceEmbeddings(model_name="intfloat/e5-large-v2")
     db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
-    retriever = db.as_retriever(search_kwargs = {"k": 4})
+    retriever = db.as_retriever(search_kwargs = {"k": 3})
 
-    template = """Répond à la question en français et en utilisant le contexte suivant:
-    {context}
-    Question: {question}
+    template = """Répond à la question en français et en utilisant uniquement le contexte. Si tu ne trouve rien dans le contexte, répond : 'je ne sais pas':
+    Contexte: {context}
+    Question: [/INST] {question} [INST]
     """
     
     prompt = ChatPromptTemplate.from_template(template)    
@@ -73,7 +73,7 @@ async def on_message(message: cl.Message):
             await answer.stream_token(chunk["answer"])
 
 
-    answer.elements = [cl.Pdf(name="pdf1", display="inline", path=s) for s in sources]                
+    answer.elements = [cl.Pdf(name="pdf1", display="inline", path=s) for s in sources][:1]                
 
     
     await answer.send()

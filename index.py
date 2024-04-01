@@ -24,7 +24,7 @@ for file in glob("docs/*.pdf"):
     print(file)
     loader = PyPDFLoader(file)
     pages = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=0)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=50)
     docs = text_splitter.split_documents(pages)
     db = Chroma.from_documents(docs, embeddings, persist_directory="./chroma_db")
 
