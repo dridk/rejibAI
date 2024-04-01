@@ -18,14 +18,13 @@ from langchain_text_splitters import CharacterTextSplitter, RecursiveCharacterTe
 import chainlit as cl
 import os 
 
-os.environ["OPENAI_API_KEY"]= "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"
 
 @cl.on_chat_start
 async def on_chat_start():
     model = ChatOllama(model="mistral")
     embeddings = HuggingFaceEmbeddings(model_name="intfloat/e5-large-v2")
     db = Chroma(persist_directory="./chroma_db4", embedding_function=embeddings)
-    retriever = db.as_retriever(k=2)
+    retriever = db.as_retriever(search_kwargs = {"k": 4})
 
     template = """Répond à la question en français et en utilisant le contexte suivant:
     {context}
