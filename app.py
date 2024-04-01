@@ -23,7 +23,7 @@ import os
 async def on_chat_start():
     model = ChatOllama(model="mistral")
     embeddings = HuggingFaceEmbeddings(model_name="intfloat/e5-large-v2")
-    db = Chroma(persist_directory="./chroma_db4", embedding_function=embeddings)
+    db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
     retriever = db.as_retriever(search_kwargs = {"k": 4})
 
     template = """Répond à la question en français et en utilisant le contexte suivant:
