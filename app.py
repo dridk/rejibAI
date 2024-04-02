@@ -22,7 +22,10 @@ import os
 @cl.on_chat_start
 async def on_chat_start():
     model = ChatOllama(model="mistral")
+    
     embeddings = HuggingFaceEmbeddings(model_name="intfloat/e5-large-v2")
+
+    
     db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
     retriever = db.as_retriever(search_kwargs = {"k": 3})
 
@@ -73,7 +76,7 @@ async def on_message(message: cl.Message):
             await answer.stream_token(chunk["answer"])
 
 
-    answer.elements = [cl.Pdf(name="pdf1", display="inline", path=s) for s in sources][:1]                
+    answer.elements = [cl.Pdf(name="pdf1", display="inline", path=s) for s in sources]                
 
     
     await answer.send()
